@@ -43,7 +43,7 @@ func NewTransaction(from, to string, amount int, chain *BlockChain) *Transaction
 		outputs = append(outputs, TxOutput{acc - amount, from})
 	}
 
-	tx := Transaction{Inputs:  inputs, Outputs: outputs}
+	tx := Transaction{Inputs: inputs, Outputs: outputs}
 	tx.SetID()
 
 	return &tx
@@ -64,25 +64,6 @@ func (tx *Transaction) SetID() {
 
 func (tx *Transaction) IsCoinbase() bool {
 	return len(tx.Inputs) == 1 && len(tx.Inputs[0].ID) == 0 && tx.Inputs[0].Out == -1
-}
-
-type TxOutput struct {
-	Value  int
-	PubKey string
-}
-
-func (out *TxOutput) CanBeUnlocked(pubKey string) bool {
-	return out.PubKey == pubKey
-}
-
-type TxInput struct {
-	ID  []byte
-	Out int
-	Sig string
-}
-
-func (in *TxInput) CanUnlock(signature string) bool {
-	return in.Sig == signature
 }
 
 func CoinbaseTx(to, data string) *Transaction {

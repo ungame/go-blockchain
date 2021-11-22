@@ -26,6 +26,18 @@
     go run main.go printchain
 ```
 
+- Criar uma carteira
+
+```cmd
+    go run main.go createwallet
+```
+
+- Listar endereços das carteiras
+
+```cmd
+    go run main.go listaddresses
+```
+
 ## Tutoriais 
 
 - [Youtube](https://www.youtube.com/playlist?list=PLpP5MQvVi4PGmNYGEsShrlvuE2B33xV1L)

@@ -65,11 +65,13 @@ func (cli *CommandLine) printChain() {
 	for {
 		block := iter.Next()
 
-		fmt.Printf("Prev. hash: %x\n", block.PrevHash)
-		fmt.Printf("Transactions: %v\n", block.Transactions)
 		fmt.Printf("Hash: %x\n", block.Hash)
+		fmt.Printf("Prev. hash: %x\n", block.PrevHash)
 		pow := blockchain.NewProofOfWork(block)
-		fmt.Printf("Proof of Work: %s\n", strconv.FormatBool(pow.Validate()))
+		fmt.Printf("PoW: %s\n", strconv.FormatBool(pow.Validate()))
+		for _, tx := range block.Transactions {
+			fmt.Println(tx)
+		}
 		fmt.Println()
 
 		if len(block.PrevHash) == 0 {
@@ -79,17 +81,27 @@ func (cli *CommandLine) printChain() {
 }
 
 func (cli *CommandLine) createBlockChain(address string) {
+	if !wallet.ValidateAddress(address) {
+		log.Panicln("Address is not valid")
+	}
+
 	chain := blockchain.InitBlockChain(address)
 	HandleClose(chain.Database)
 	fmt.Println("Finished!")
 }
 
 func (cli *CommandLine) getBalance(address string) {
+	if !wallet.ValidateAddress(address) {
+		log.Panicln("Address is not valid")
+	}
+
 	chain := blockchain.ContinueBlockChain(address)
 	defer HandleClose(chain.Database)
 
 	balance := 0
-	UTXOs := chain.FindUTXO(address)
+	pubKeyHash := wallet.Base58Decode([]byte(address))
+	pubKeyHash = pubKeyHash[1 : len(pubKeyHash)-4]
+	UTXOs := chain.FindUTXO(pubKeyHash)
 
 	for _, out := range UTXOs {
 		balance += out.Value
@@ -99,6 +111,14 @@ func (cli *CommandLine) getBalance(address string) {
 }
 
 func (cli *CommandLine) send(from, to string, amount int) {
+	if !wallet.ValidateAddress(from) {
+		log.Panicln("Address is not valid")
+	}
+
+	if !wallet.ValidateAddress(to) {
+		log.Panicln("Address is not valid")
+	}
+
 	chain := blockchain.ContinueBlockChain(from)
 	defer HandleClose(chain.Database)
 
@@ -117,8 +137,8 @@ func (cli *CommandLine) Run() {
 	createWalletCmd := flag.NewFlagSet("createwallet", flag.ExitOnError)
 	listAddressesCmd := flag.NewFlagSet("listaddresses", flag.ExitOnError)
 
-	getBalanceAddress := getBalanceCmd.String("address", "", "The address")
-	createBlockChainAddress := createBlockChainCmd.String("address", "", "")
+	getBalanceAddress := getBalanceCmd.String("address", "", "The balance of one address")
+	createBlockChainAddress := createBlockChainCmd.String("address", "", "The address to receive coinbase tx")
 	sendFrom := sendCmd.String("from", "", "Source wallet address")
 	sendTo := sendCmd.String("to", "", "Destination wallet address")
 	sendAmount := sendCmd.Int("amount", 0, "Amount to send")
